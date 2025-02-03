@@ -20,7 +20,7 @@ class ProfileScreen extends StatelessWidget {
             final todos = state.todos;
             final totalTasks = todos.length;
             final completedTasks = todos.where((todo) => todo.isCompleted).length;
-            final pendingTasks = totalTasks - completedTasks;
+            final activeTasks = todos.where((todo) => !todo.isCompleted).length;
 
             return Container(
               decoration: BoxDecoration(
@@ -77,8 +77,8 @@ class ProfileScreen extends StatelessWidget {
                             ),
                             _buildStatRow(
                               icon: Icons.pending,
-                              label: 'Pending Tasks',
-                              value: pendingTasks.toString(),
+                              label: 'Active Tasks',
+                              value: activeTasks.toString(),
                               color: Colors.orange[300]!,
                             ),
                             const SizedBox(height: 20),
@@ -87,7 +87,7 @@ class ProfileScreen extends StatelessWidget {
                               completedTasks: completedTasks,
                             ),
                             const SizedBox(height: 20),
-                            _buildTaskList(todos),
+                            _buildTaskLists(todos),
                           ],
                         ),
                       ),
@@ -168,48 +168,65 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTaskList(List<Todo> todos) {
+  Widget _buildTaskLists(List<Todo> todos) {
+    final activeTasks = todos.where((todo) => !todo.isCompleted).toList();
+    final completedTasks = todos.where((todo) => todo.isCompleted).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildTaskSection('Active Tasks', activeTasks, Colors.orange),
+        const SizedBox(height: 20),
+        _buildTaskSection('Completed Tasks', completedTasks, Colors.green),
+      ],
+    );
+  }
+
+  Widget _buildTaskSection(String title, List<Todo> tasks, MaterialColor color) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Recent Tasks',
+          title,
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Colors.blue[700],
+            color: color[700],
           ),
         ),
         const SizedBox(height: 10),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: todos.length > 5 ? 5 : todos.length,
-          itemBuilder: (context, index) {
-            final todo = todos[index];
-            return ListTile(
-              title: Text(
-                todo.title,
-                style: TextStyle(
-                  decoration: todo.isCompleted 
-                    ? TextDecoration.lineThrough
-                    : TextDecoration.none,
-                  color: todo.isCompleted 
-                    ? Colors.grey 
-                    : Colors.black,
+        tasks.isEmpty
+            ? Center(
+                child: Text(
+                  'No ${title.toLowerCase()}',
+                  style: TextStyle(color: color[300]),
                 ),
+              )
+            : ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: tasks.length > 5 ? 5 : tasks.length,
+                itemBuilder: (context, index) {
+                  final todo = tasks[index];
+                  return ListTile(
+                    title: Text(
+                      todo.title,
+                      style: TextStyle(
+                        color: title == 'Active Tasks' ? Colors.black : Colors.grey,
+                        decoration: title == 'Completed Tasks'
+                            ? TextDecoration.lineThrough
+                            : TextDecoration.none,
+                      ),
+                    ),
+                    trailing: Icon(
+                      title == 'Active Tasks'
+                          ? Icons.circle_outlined
+                          : Icons.check_circle,
+                      color: title == 'Active Tasks' ? Colors.orange : Colors.green,
+                    ),
+                  );
+                },
               ),
-              trailing: Icon(
-                todo.isCompleted 
-                  ? Icons.check_circle 
-                  : Icons.circle_outlined,
-                color: todo.isCompleted 
-                  ? Colors.green 
-                  : Colors.grey,
-              ),
-            );
-          },
-        ),
       ],
     );
   }
